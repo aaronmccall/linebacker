@@ -1,0 +1,10 @@
+{
+    "name": "linebacker",
+    "version": "0.0.2",
+    "main": "./lib/linebacker.js",
+    "author": {
+        "name":     "Aaron McCall",
+        "email":    "aaron@andyet.net",
+        "url":      "http://blog.aaronmccall.com"
+    } 
+}
