@@ -5,8 +5,9 @@
 	"ext": "ext",
 	"lint": {},
 	"uglify": {},
-	"gendocs": {},
 	"hosts": {
-		"/": "html"
-	}
+		"/": "spec"
+	},
+	"working": "./tmp",
+	"mocha": { "reporter": "spec"}
 }
