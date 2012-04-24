@@ -10,14 +10,14 @@ four  = {'four'   : 4}
 describe 'linebacker', ->
   describe 'middle', ->
 
-    it "should apply 'one' last when only two args", (done) ->
+    it "should apply 'one' last", (done) ->
       fn = (first, second) ->
         first.should.equal two
         second.should.equal one
         done()
       func = lb.middle(fn, one)(two)
 
-    it "should apply 'one' in the middle when more than two args", (done) ->
+    it "should apply 'one' in the middle", (done) ->
       fn = (first, second, third) ->
         first.should.equal three
         second.should.equal one
@@ -25,7 +25,7 @@ describe 'linebacker', ->
         done()
       func = lb.middle(fn, one)(three, two, four)
 
-    it "should apply [three, one, two, four] when middle(middle(fn, one), two)(three, four)", (done) ->
+    it "should apply [three, one, two, four]", (done) ->
       fn = (first, second, third, fourth) ->
         first.should.equal  three
         second.should.equal one

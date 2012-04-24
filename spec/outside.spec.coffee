@@ -18,7 +18,7 @@ describe 'linebacker', ->
 
         lb.outside(fn, one)(two)
 
-    it "should apply [three, one, two] when outside(fn, one, two)(three)", (done) ->
+    it "should apply [three, one, two]", (done) ->
         fn = (first, second, last) ->
             first.should.equal  three
             second.should.equal one
@@ -27,7 +27,7 @@ describe 'linebacker', ->
 
         lb.outside(fn, one, two)(three)
 
-    it "should apply [four, two, three, one] when outside(outside(fn, one), two, three)(four)", (done) ->
+    it "should apply [four, two, three, one]", (done) ->
         fn = (first, second, third, fourth) ->
             first.should.equal  four
             second.should.equal two
