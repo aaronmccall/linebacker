@@ -32,51 +32,73 @@ to always be set at call time with error (in node) or event (if in browser).
     - _args {Multiple}_: the rest of the members of the arguments object 
 
 
+### A simple node example
+
+- players.js
     ```javascript
-    // A simple node example
-    
-    // In players.js
+    var Player = require('models/player').Player
+
     exports.getById = function (id, next) {
-        // if player is found, next is called with null as 1st arg, data as 2nd
-        db.players.getById(id, next)
+        // if player is found, hydrate Player instance and pass to next
+        db.players.getById(id, function (err, player_data) {
+            if (err) return next(err)
+            next(null, new Player(player_data))
+        })
     }
     
     exports.update = function (player, data, next) {
         player.set(data)
         // calls next upon failure or sucess
         // upon failure only arg is an Error
-        // upon success 1st arg is null, 2nd is result data
+        // upon success 1st arg is null, 2nd is updated Player instance
         player.save(next)
     }
-    // A typical server.js
+    ```
+
+- server.js (typical)
+    ```javascript
+
     var players = require('players')
 
-    app.post('/players/:id', function (req, res) {
-        var data = req.body || {}
-          , id = req.params.id
+    app.get('/players/:id', function (req, res) {
 
-        players.getById(id, function (error, player) {
-            if (error) return res.render(error.template || 'error', {error: error, data: data})
-            players.update(player, data, function (error, result)) {
-                if (error) return res.render(error.template || 'error', error)
-                res.render('player', {data: result})
-            })
+        players.getById(req.params.id, function (error, player) {
+            if (error) return res.render(error.template || 'error', error)
+            res.render('player', player)
         })
     })
 
-    // In server.js with linebacker
+    app.post('/players/:id', function (req, res) {
+        var data = req.body || {}
+
+        players.getById(req.params.id, function (error, player) {
+            if (error) return res.render(error.template || 'error', error)
+            players.update(player, data, function (error, result)) {
+                if (error) return res.render(error.template || 'error', error)
+                res.render('player', result)
+            })
+        })
+    })
+    ```
+
+- server.js (with linebacker)
+    ```javascript
     var players = require('players')
+      , lb = require('linebacker')
+
     function respond(error, data, template, res) {
-        if (error) {
-            return res.render(error.template || 'error', error)
-        }
+        if (error) return res.render(error.template || 'error', error)
         res.render(template || 'default', data)
     }
 
+    app.get('/players/:id', function (req, res) {
+        players.getById(req.params.id, lb.outside(respond, 'player', res))
+    })
+
     app.post('/players/:id', function (req, res) {
-        var responder = lb.coach(respond, null, false, 'player', res)
-          , player_updater = lb.coach(players.update, null, false, req.body || {}, responder)
-          
+        var data = req.body || {}
+          , player_updater = lb.outside(players.update, data, 
+                                        lb.outside(respond, 'player', res))
           players.getById(req.params.id, player_updater)
     });
     
