@@ -103,3 +103,95 @@ to always be set at call time with error (in node) or event (if in browser).
     });
     
     ```
+
+### A simple browser example
+
+- app.js (typical)
+    ```javascript
+    //Set the 3 possible state for the accordion
+    (function ($) {
+      var active
+
+      function setActive(newState) {
+          // store our new state as current state
+          active = newState
+
+          // make the UI reflect our new current state
+          if (active === 'top') {
+            $('#substream, .event_listing, .events header').slideDown()
+            $('#submit').addClass('down')
+            $('#submitEvent').slideUp()
+          } else if (active === 'bottom') {
+            $('#submitEvent').slideDown()
+            $('#event_submit').addClass('down')
+            $('#substream, .event_listing, .events header').slideUp()
+          } else {
+            $('#submit, #event_submit').removeClass('down')
+            $('#submitEvent, #substream').slideUp()
+            $('.event_listing, .events header').slideDown()
+          }
+      }
+
+      // State if they add a post
+      $('#post_submit').click(function () {
+        if (active === 'top') {
+            setActive('')
+        } else {
+            setActive('top')
+        }
+        return false
+      })
+
+      //State if they add a event
+      $('#event_submit').click(function () {
+        if (active === 'bottom') {
+          setActive('')
+        } else {
+          setActive('bottom')
+        }
+        return false
+      })
+    })(jQuery)
+    ```
+- app.js (with linebacker)
+    ```javascript
+    //Set the 3 possible state for the accordion
+    (function ($, lb) {
+        var active
+          , form_sections = $('#substream, .event_listing, .events header, #submitEvent')
+          , form_buttons = $('#submit, #event_submit')
+          , activate = {
+                top: lb.outside( setActive, 'top'                       // newState = top
+                               , form_sections.not('#submitEvent')      // slide down
+                               , form_sections.filter('#submitEvent')   // slide up
+                               , form_buttons.filter('#submit'), 'add'))// add .down
+              , bottom: lb.outside( setActive, 'bottom'
+                                  , form_sections.filter('#submitEvent')
+                                  , form_sections.not('#submitEvent')
+                                  , form_buttons.filter('#event_submit'), 'add')
+              , none: lb.outside( setActive, ''
+                                , form_sections.filter('.events_listing, .events header')
+                                , form_sections.not('.events_listing, .events header')
+                                , form_buttons, 'remove')
+            }
+
+        function activate(event, section) {
+          if (section === active) return activate['none']()
+          if (section in activate) activate[section]()
+        }
+
+        function setActive(newState, slide_down, slide_up, down_els, down_op) {
+          // store our new state as current state
+          active = newState
+          if (slide_down) slide_down.slideDown()
+          if (slide_up) slide_up.slideUp()
+          if (down_els && down_op) down_els[down_op+'Class']('.down')
+        }
+
+        // State if they add a stream post
+        $('#submit').click(lb.outside(activate, 'top'))
+
+        //State if they add a event
+        $('#event_submit').click(lb.outside(activate, 'bottom'))
+    })(jQuery, linebacker)
+    ```
