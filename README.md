@@ -108,7 +108,7 @@ to always be set at call time with error (in node) or event (if in browser).
 
 - app.js (typical)
     ```javascript
-    //Set the 3 possible state for the accordion
+    //Set the 3 possible states for the accordion
     (function ($) {
       var active
 
@@ -153,45 +153,57 @@ to always be set at call time with error (in node) or event (if in browser).
       })
     })(jQuery)
     ```
+    With this code, adding a new section to the accordion requires setting up a new click handler 
+    function (`$(selector).click(function () {...});`) and adding a new section to the 
+    `if (active === ...)` statement. Due to the duplicated code and complicated if statement, 
+    the intent of the code starts to get lost as more sections are added.
+
 - app.js (with linebacker)
     ```javascript
-    //Set the 3 possible state for the accordion
+    //Set the states for the accordion
     (function ($, lb) {
         var active
-          , form_sections = $('#substream, .event_listing, .events header, #submitEvent')
-          , form_buttons = $('#submit, #event_submit')
+          , sections = $('#substream, .event_listing, .events header, #submitEvent')
+          , buttons = $('#post_submit, #event_submit')
           , activate = {
-                top: lb.outside( setActive, 'top'                       // newState = top
-                               , form_sections.not('#submitEvent')      // slide down
-                               , form_sections.filter('#submitEvent')   // slide up
-                               , form_buttons.filter('#submit'), 'add'))// add .down
-              , bottom: lb.outside( setActive, 'bottom'
-                                  , form_sections.filter('#submitEvent')
-                                  , form_sections.not('#submitEvent')
-                                  , form_buttons.filter('#event_submit'), 'add')
+                first: lb.outside( setActive, 'first'
+                               , sections.not('#submitEvent')
+                               , sections.filter('#submitEvent')
+                               , buttons.filter('#submit'), 'add'))
+              , second: lb.outside( setActive, 'second'
+                                  , sections.filter('#submitEvent')
+                                  , sections.not('#submitEvent')
+                                  , buttons.filter('#event_submit'), 'add')
               , none: lb.outside( setActive, ''
-                                , form_sections.filter('.events_listing, .events header')
-                                , form_sections.not('.events_listing, .events header')
-                                , form_buttons, 'remove')
+                                , sections.filter('.events_listing, .events header')
+                                , sections.not('.events_listing, .events header')
+                                , buttons, 'remove')
             }
 
-        function activate(event, section) {
+        function activator(event, section) {
           if (section === active) return activate['none']()
-          if (section in activate) activate[section]()
+          if (section in activate) activate[section].call()
         }
 
         function setActive(newState, slide_down, slide_up, down_els, down_op) {
-          // store our new state as current state
-          active = newState
-          if (slide_down) slide_down.slideDown()
-          if (slide_up) slide_up.slideUp()
-          if (down_els && down_op) down_els[down_op+'Class']('.down')
+          active = newState                     // store our new state as current state
+          if (slide_down) 
+            slide_down.slideDown()              // Reveal elements that should be visible
+          if (slide_up) 
+            slide_up.slideUp()                  // Hide elements that should be hidden
+          if (down_els && down_op) 
+            down_els[down_op+'Class']('.down')  // Add/remove class for what is 'down' (ie, visible)
         }
 
         // State if they add a stream post
-        $('#submit').click(lb.outside(activate, 'top'))
+        $('#post_submit').click(lb.outside(activator, 'first'))
 
         //State if they add a event
-        $('#event_submit').click(lb.outside(activate, 'bottom'))
+        $('#event_submit').click(lb.outside(activator, 'second'))
     })(jQuery, linebacker)
     ```
+    With *linebacker* we can setup a couple of generic functions (activator and setActive) 
+    that can be used to manage our accordion. We then use *linebacker's* `outside` method to
+    pre-apply the correct sections, elements and class operations to the generics. Now we can 
+    add as many sections as may be required without an ever more complicated `if` or an ever 
+    increasing number of anonymous event callbacks.
